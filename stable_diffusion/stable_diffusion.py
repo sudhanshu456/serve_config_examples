@@ -4,15 +4,16 @@ from fastapi.responses import Response
 import torch
 
 from ray import serve
+from ray.serve.handle import DeploymentHandle
 
 
 app = FastAPI()
 
 
-@serve.deployment(num_replicas=1, route_prefix="/")
+@serve.deployment(num_replicas=1)
 @serve.ingress(app)
 class APIIngress:
-    def __init__(self, diffusion_model_handle) -> None:
+    def __init__(self, diffusion_model_handle: DeploymentHandle) -> None:
         self.handle = diffusion_model_handle
 
     @app.get(
@@ -22,10 +23,8 @@ class APIIngress:
     )
     async def generate(self, prompt: str, img_size: int = 512):
         assert len(prompt), "prompt parameter cannot be empty"
-        print(f"incoming promp: {prompt}")
-        image_ref = await self.handle.generate.remote(prompt, img_size=img_size)
-        print(image_ref,type(image_ref))
-        image = await image_ref
+
+        image = await self.handle.generate.remote(prompt, img_size=img_size)
         file_stream = BytesIO()
         image.save(file_stream, "PNG")
         return Response(content=file_stream.getvalue(), media_type="image/png")
