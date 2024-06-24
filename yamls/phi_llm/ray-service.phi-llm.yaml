@@ -8,7 +8,7 @@ spec:
       - name: phi_llm
         import_path: phi_llm.phi_llm:build_app
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/b3f51469c436b34eec2d20664672fed8978524d5.zip"
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/978d5f40c4bcec9b7d7f2de82d50b42f1ad7a8b0.zip"
           pip: ["requests","vllm"]
   rayClusterConfig:
     rayVersion: '2.9.0' # Should match the Ray version in the image of the containers
@@ -52,7 +52,7 @@ spec:
     # The pod replicas in this group typed worker
     - replicas: 1
       minReplicas: 1
-      maxReplicas: 10
+      maxReplicas: 1
       groupName: gpu-group
       rayStartParams: {}
       # Pod template
