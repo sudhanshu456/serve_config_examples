@@ -23,14 +23,7 @@ logger = logging.getLogger("ray.serve")
 app = FastAPI()
 
 
-@serve.deployment(
-    autoscaling_config={
-        "min_replicas": 1,
-        "max_replicas": 1,
-        "target_ongoing_requests": 5,
-    },
-    max_ongoing_requests=10,
-)
+@serve.deployment()
 @serve.ingress(app)
 class VLLMDeployment:
     def __init__(
@@ -76,34 +69,12 @@ class VLLMDeployment:
             return JSONResponse(content=generator.model_dump())
 
 
-def parse_vllm_args(cli_args: Dict[str, str]):
-    """Parses vLLM args based on CLI inputs.
-
-    Currently uses argparse because vLLM doesn't expose Python models for all of the
-    config options we want to support.
-    """
-    parser = make_arg_parser()
-    arg_strings = []
-    for key, value in cli_args.items():
-        arg_strings.extend([f"--{key}", str(value)])
-    logger.info(arg_strings)
-    parsed_args = parser.parse_args(args=arg_strings)
-    return parsed_args
-
-
-def build_app() -> serve.Application:
-    """Builds the Serve app based on CLI arguments.
-
-    See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html#command-line-arguments-for-the-server
-    for the complete set of arguments.
-
-    Supported engine arguments: https://docs.vllm.ai/en/latest/models/engine_args.html.
-    """  # noqa: E501
-
+def build_app(cli_args: Dict[str, str]) -> serve.Application:
+    """Builds the Serve app with predefined arguments."""
     engine_args = AsyncEngineArgs(
-        model="NousResearch/Meta-Llama-3-8B-Instruct",
-        tensor_parallel_size=1,
-        served_model_name=None,  # Set this if you have a specific model name
+        model=cli_args.get("model", "microsoft/Phi-3-mini-128k-instruct"),
+        tensor_parallel_size=int(cli_args.get("tensor_parallel_size", 1)),
+        served_model_name=cli_args.get("served_model_name"),  # Set this if you have a specific model name
         # Add other required parameters here
     )
     engine_args.worker_use_ray = True
@@ -121,9 +92,16 @@ def build_app() -> serve.Application:
         placement_group_bundles=pg_resources, placement_group_strategy="STRICT_PACK"
     ).bind(
         engine_args,
-        "system",  # Set the response role here
+        cli_args.get("response_role", "system"),  # Set the response role here
         None,  # Set the LoRA modules here if any
         None,  # Set the chat template here if any
     )
 
-app = build_app()
+# Example usage
+cli_args = {
+    "model": "microsoft/Phi-3-mini-128k-instruct",
+    "tensor_parallel_size": 1,
+    "response_role": "system",
+}
+
+app = build_app(cli_args)
