@@ -6,7 +6,6 @@ from starlette.requests import Request
 from starlette.responses import StreamingResponse, JSONResponse
 
 from ray import serve
-from ray.serve.handle import DeploymentHandle
 
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
@@ -24,11 +23,27 @@ logger = logging.getLogger("ray.serve")
 app = FastAPI()
 
 
-@serve.deployment(num_replicas=1)
+@serve.deployment()
 @serve.ingress(app)
-class APIIngress:
-    def __init__(self, handle: DeploymentHandle) -> None:
-        self.handle = handle
+class VLLMDeployment:
+    def __init__(
+        self,
+        engine_args: AsyncEngineArgs,
+        response_role: str,
+        lora_modules: Optional[List[LoRAModulePath]] = None,
+        chat_template: Optional[str] = None,
+    ):
+        logger.info(f"Starting with engine args: {engine_args}")
+        self.engine = AsyncLLMEngine.from_engine_args(engine_args)
+
+        # Determine the name of the served model for the OpenAI client.
+        if engine_args.served_model_name is not None:
+            served_model_names = engine_args.served_model_name
+        else:
+            served_model_names = [engine_args.model]
+        self.openai_serving_chat = OpenAIServingChat(
+            self.engine, served_model_names, response_role, lora_modules, chat_template
+        )
 
     @app.post("/v1/chat/completions")
     async def create_chat_completion(
@@ -40,38 +55,9 @@ class APIIngress:
             - https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html
         """
         logger.info(f"Request: {request}")
-        response = await self.handle.generate.remote(
+        generator = await self.openai_serving_chat.create_chat_completion(
             request, raw_request
         )
-        return response
-        
-
-@serve.deployment(
-    ray_actor_options={"num_gpus": 1},
-    autoscaling_config={"min_replicas": 0, "max_replicas": 1},
-)
-class VLLMDeployment:
-    def __init__(self):
-        engine_args = AsyncEngineArgs(
-        # gpu_memory_utilization=0.8,
-        model="microsoft/Phi-3-mini-128k-instruct",
-        tensor_parallel_size=1,
-        )
-
-        engine_args.worker_use_ray = True
-        response_role="system"
-        lora_modules: Optional[List[LoRAModulePath]] = None,
-        chat_template: Optional[str] = None
-
-        self.engine = AsyncLLMEngine.from_engine_args(engine_args)
-
-        served_model_names = [engine_args.model]
-        self.openai_serving_chat = OpenAIServingChat(
-            self.engine, served_model_names, response_role, lora_modules, chat_template
-        )
-       
-    async def generate(self,  request: ChatCompletionRequest, raw_request: Request):
-        generator = await self.openai_serving_chat.create_chat_completion(request, raw_request)
         if isinstance(generator, ErrorResponse):
             return JSONResponse(
                 content=generator.model_dump(), status_code=generator.code
@@ -82,4 +68,42 @@ class VLLMDeployment:
             assert isinstance(generator, ChatCompletionResponse)
             return JSONResponse(content=generator.model_dump())
 
-entrypoint = APIIngress.bind(VLLMDeployment.bind())
+
+def build_app(cli_args: Dict[str, str]) -> serve.Application:
+    """Builds the Serve app with predefined arguments."""
+    engine_args = AsyncEngineArgs(
+        gpu_memory_utilization=float(cli_args.get("gpu_memory_utilization", 0.8)),
+        model=cli_args.get("model", "microsoft/Phi-3-mini-128k-instruct"),
+        tensor_parallel_size=int(cli_args.get("tensor_parallel_size", 1)),
+        served_model_name=cli_args.get("served_model_name"),  # Set this if you have a specific model name
+        # Add other required parameters here
+    )
+    engine_args.worker_use_ray = True
+
+    tp = engine_args.tensor_parallel_size
+    logger.info(f"Tensor parallelism = {tp}")
+    pg_resources = []
+    pg_resources.append({"CPU": 1})  # for the deployment replica
+    for i in range(tp):
+        pg_resources.append({"CPU": 1, "GPU": 1})  # for the vLLM actors
+
+    # We use the "STRICT_PACK" strategy below to ensure all vLLM actors are placed on
+    # the same Ray node.
+    return VLLMDeployment.options(
+        placement_group_bundles=pg_resources, placement_group_strategy="PACK"
+    ).bind(
+        engine_args,
+        cli_args.get("response_role", "system"),  # Set the response role here
+        None,  # Set the LoRA modules here if any
+        None,  # Set the chat template here if any
+    )
+
+# Example usage
+cli_args = {
+    "model": "microsoft/Phi-3-mini-128k-instruct",
+    "tensor_parallel_size": 1,
+    "response_role": "system",
+    "gpu_memory_utilization": 0.8,  # Adjust this value as needed 
+}
+
+app = build_app(cli_args)

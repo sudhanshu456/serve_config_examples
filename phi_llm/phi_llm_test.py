@@ -17,7 +17,7 @@ chat_completion = client.chat.completions.create(
         },
     ],
     temperature=0.01,
-    stream=True,
+    stream=False,
 )
 
 for chat in chat_completion:
