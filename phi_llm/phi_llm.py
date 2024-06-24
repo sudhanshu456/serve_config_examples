@@ -72,6 +72,7 @@ class VLLMDeployment:
 def build_app(cli_args: Dict[str, str]) -> serve.Application:
     """Builds the Serve app with predefined arguments."""
     engine_args = AsyncEngineArgs(
+        max_model_len=int(cli_args.get("max_model_len", 1024)),
         model=cli_args.get("model", "microsoft/Phi-3-mini-128k-instruct"),
         tensor_parallel_size=int(cli_args.get("tensor_parallel_size", 1)),
         served_model_name=cli_args.get("served_model_name"),  # Set this if you have a specific model name
@@ -102,6 +103,7 @@ cli_args = {
     "model": "microsoft/Phi-3-mini-128k-instruct",
     "tensor_parallel_size": 1,
     "response_role": "system",
+    "max_model_len": 1024,  
 }
 
 app = build_app(cli_args)
