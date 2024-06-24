@@ -6,6 +6,7 @@ from starlette.requests import Request
 from starlette.responses import StreamingResponse, JSONResponse
 
 from ray import serve
+from ray.serve.handle import DeploymentHandle
 
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
@@ -29,7 +30,7 @@ app = FastAPI()
 @serve.ingress(app)
 class APIIngress:
     def __init__(self, handle: DeploymentHandle) -> None:
-        self.openai_serving_chat = openai_serving_chat
+        self.openai_serving_chat = handle
 
     @app.post("/v1/chat/completions")
     async def create_chat_completion(

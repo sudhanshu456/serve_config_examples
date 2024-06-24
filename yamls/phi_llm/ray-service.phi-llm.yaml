@@ -8,7 +8,7 @@ spec:
       - name: phi_llm
         import_path: phi_llm.phi_llm:entrypoint
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/149a0e90251c94dc2fd9ced01dc9e6ccb9259744.zip"
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/cc8300193c6a1c3eea7316507beaf4f3813e5963.zip"
           pip: ["requests","vllm"]
   rayClusterConfig:
     rayVersion: '2.9.0' # Should match the Ray version in the image of the containers
