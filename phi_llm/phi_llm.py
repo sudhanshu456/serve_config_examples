@@ -70,8 +70,8 @@ class VLLMDeployment:
             self.engine, served_model_names, response_role, lora_modules, chat_template
         )
        
-    def generate(self,  request: ChatCompletionRequest, raw_request: Request):
-        generator = self.openai_serving_chat.create_chat_completion(request, raw_request)
+    async def generate(self,  request: ChatCompletionRequest, raw_request: Request):
+        generator = await self.openai_serving_chat.create_chat_completion(request, raw_request)
         if isinstance(generator, ErrorResponse):
             return JSONResponse(
                 content=generator.model_dump(), status_code=generator.code
