@@ -35,7 +35,7 @@ class PhiLLM:
             "temperature": 0.0,
             "do_sample": False,
         }
-        return pipe(text + "\n", **generation_args)[0]["generated_text"]
+        return self.pipe(text + "\n", **generation_args)[0]["generated_text"]
 
     async def __call__(self, request: Request) -> Dict:
         data = await request.json()
