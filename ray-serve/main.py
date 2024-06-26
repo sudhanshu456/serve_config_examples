@@ -19,6 +19,7 @@ import yaml
 import os
 
 """
+ray_vllm_inference
 """
 
 class GenerateRequest(BaseModel):
