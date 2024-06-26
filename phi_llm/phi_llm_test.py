@@ -10,14 +10,14 @@ client = OpenAI(
 chat_completion = client.chat.completions.create(
     model="microsoft/Phi-3-mini-4k-instruct",
     messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "assistent", "content": "You are a helpful assistant."},
         {
             "role": "user",
             "content": "What are some highly rated restaurants in San Francisco?'",
         },
     ],
     temperature=0.01,
-    stream=False,
+    stream=True,
 )
 
 for chat in chat_completion:
