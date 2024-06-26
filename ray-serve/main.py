@@ -12,12 +12,11 @@ from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.sampling_params import SamplingParams
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from pydantic import BaseModel
-from typing import TYPE_CHECKING,Literal, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Literal, Optional, TypeVar, Union
 from typing import Set, Tuple, Type
 from pydantic import BaseModel, root_validator, validator
 import yaml
 import os
-
 
 logger = logging.getLogger("ray.serve")
 
@@ -28,7 +27,6 @@ class GenerateRequest(BaseModel):
     """Generate completion request.
 
         prompt: Prompt to use for the generation
-        stream: Bool flag whether to stream the output or not
         max_tokens: Maximum number of tokens to generate per output sequence.
         temperature: Float that controls the randomness of the sampling. Lower
             values make the model more deterministic, while higher values make
@@ -40,35 +38,33 @@ class GenerateRequest(BaseModel):
         See: vllm/sampling_params.py in the vLLM repository.
         """
     prompt: Optional[str]
-    stream: Optional[bool] = False
     max_tokens: Optional[int] = 128
     temperature: Optional[float] = 0.7
     ignore_eos: Optional[bool] = False
+
 
 class GenerateResponse(BaseModel):
     """Generate completion response.
 
         output: Model output
-        prompt_tokens: Number of tokens in the prompt
-        output_tokens: Number of generated tokens
         finish_reason: Reason the genertion has finished
     """
     output: str
-    prompt_tokens: int
-    output_tokens: int
     finish_reason: Optional[str]
-    
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     return create_error_response(HTTPStatus.BAD_REQUEST, 'Error parsing JSON payload')
 
+
 def create_error_response(status_code: HTTPStatus,
                           message: str) -> JSONResponse:
-    return JSONResponse(status_code=status_code.value, content={"detail":message})
+    return JSONResponse(status_code=status_code.value, content={"detail": message})
 
-@serve.deployment(name='VLLMInference', 
-                  num_replicas=1, 
+
+@serve.deployment(name='VLLMInference',
+                  num_replicas=1,
                   max_concurrent_queries=10,
                   ray_actor_options={"num_gpus": 1.0})
 @serve.ingress(app)
@@ -116,38 +112,10 @@ class VLLMGenerateDeployment:
         logger.info(args)
         self.engine = AsyncLLMEngine.from_engine_args(args)
         engine_model_config = self.engine.engine.get_model_config()
-        self.tokenizer = self.engine.engine.tokenizer
         self.max_model_len = kwargs.get('max_model_len', engine_model_config.max_model_len)
 
     def _next_request_id(self):
         return str(uuid.uuid1().hex)
-
-    def _check_length(self, prompt:str, request:GenerateRequest) -> List[int]:
-        input_ids = self.tokenizer(prompt).input_ids
-        token_num = len(input_ids)
-
-        if request.max_tokens is None:
-            request.max_tokens = self.max_model_len - token_num
-        if token_num + request.max_tokens > self.max_model_len:
-            raise ValueError(
-            f"This model's maximum context length is {self.max_model_len} tokens. "
-            f"However, you requested {request.max_tokens + token_num} tokens "
-            f"({token_num} in the messages, "
-            f"{request.max_tokens} in the completion). "
-            f"Please reduce the length of the messages or completion.")
-        return input_ids
-
-    async def _stream_results(self, output_generator) -> AsyncGenerator[bytes, None]:
-        num_returned = 0
-        async for request_output in output_generator:
-            output = request_output.outputs[0]
-            text_output = output.text[num_returned:]
-            response = GenerateResponse(output=text_output, 
-                             prompt_tokens=len(request_output.prompt_token_ids), 
-                             output_tokens=1, 
-                             finish_reason=output.finish_reason)
-            yield (response.json() + "\n").encode("utf-8")
-            num_returned += len(text_output)
 
     async def _abort_request(self, request_id) -> None:
         await self.engine.abort(request_id)
@@ -158,7 +126,7 @@ class VLLMGenerateDeployment:
         return Response(status_code=200)
 
     @app.post("/generate")
-    async def generate(self, request:GenerateRequest, raw_request:Request) -> Response:
+    async def generate(self, request: GenerateRequest, raw_request: Request) -> Response:
         """Generate completion for the request.
 
         Args:
@@ -173,9 +141,9 @@ class VLLMGenerateDeployment:
         try:
             if not request.prompt and not request.messages:
                 return create_error_response(HTTPStatus.BAD_REQUEST, "Missing parameter 'prompt' or 'messages'")
-            
+
             if request.prompt:
-                 prompt = request.prompt
+                prompt = request.prompt
             else:
                 raise Exception("no prompt found in request")
 
@@ -184,40 +152,29 @@ class VLLMGenerateDeployment:
             request_dict = request.dict(exclude=set(['prompt', 'messages', 'stream']))
 
             sampling_params = SamplingParams(**request_dict)
+            
             request_id = self._next_request_id()
 
-            output_generator = self.engine.generate(prompt=None,
-                                                    sampling_params=sampling_params, 
-                                                    request_id=request_id, 
-                                                    prompt_token_ids=prompt_token_ids)
-            if request.stream:
-                background_tasks = BackgroundTasks()
-                # Abort the request processing in the engine if the socket connection drops
-                background_tasks.add_task(self._abort_request, request_id)
-                return StreamingResponse(self._stream_results(output_generator), 
-                                        background=background_tasks)
+            output_generator = self.engine.generate(prompt=prompt,
+                                                    sampling_params=sampling_params,
+                                                    request_id=request_id)
+            
+            final_output = None
+            async for request_output in output_generator:
+                if await raw_request.is_disconnected():
+                    await self.engine.abort(request_id)
+                    return Response(status_code=200)
+                final_output = request_output
 
-            else:
-                final_output = None
-                async for request_output in output_generator:
-                    if await raw_request.is_disconnected():
-                        await self.engine.abort(request_id)
-                        return Response(status_code=200)
-                    final_output = request_output
-
-                text_outputs = final_output.outputs[0].text
-                prompt_tokens = len(final_output.prompt_token_ids)
-                output_tokens = len(final_output.outputs[0].token_ids)
-                finish_reason = final_output.outputs[0].finish_reason
-                return GenerateResponse(output=text_outputs, prompt_tokens=prompt_tokens, 
-                                        output_tokens=output_tokens, finish_reason=finish_reason)
-
+            text_outputs = final_output.outputs[0].text
+            finish_reason = final_output.outputs[0].finish_reason
+            return GenerateResponse(output=text_outputs, finish_reason=finish_reason)
         except ValueError as e:
             raise HTTPException(HTTPStatus.BAD_REQUEST, str(e))
         except Exception as e:
             logger.error('Error in generate()', exc_info=1)
             raise HTTPException(HTTPStatus.INTERNAL_SERVER_ERROR, 'Server error')
 
+
 def deployment(args: Dict[str, str]) -> Application:
     return VLLMGenerateDeployment.bind(**args)
-
