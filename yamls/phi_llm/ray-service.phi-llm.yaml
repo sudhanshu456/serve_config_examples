@@ -6,7 +6,7 @@ spec:
   serveConfigV2: |
     applications:
       - name: phi_llm
-        import_path: phi_llm.phi_llm:app_handle
+        import_path: phi_llm.phi_llm:app
         runtime_env:
           working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/c8b71bbed7e366cc731229923019a21e3646bac1.zip"
           pip: ["requests","vllm"]
