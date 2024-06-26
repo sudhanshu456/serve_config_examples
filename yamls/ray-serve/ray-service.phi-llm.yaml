@@ -9,7 +9,7 @@ spec:
         route_prefix: /
         import_path: ray-serve.main:deployment
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/69db30c779a6577c071dc85900db87f3fbc7fd12.zip"
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/ec10ad5fa80da92011c87a8483685c4d20a3376f.zip"
           pip: [ "accelerate", "flash-attn" ,"git+https://github.com/huggingface/transformers", "pydantic", "vllm" ,"protobuf"]
         args:
           model: Sreenington/Phi-3-mini-4k-instruct-AWQ
