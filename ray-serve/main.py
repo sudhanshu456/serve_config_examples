@@ -172,15 +172,17 @@ class VLLMGenerateDeployment:
         Returns:
             Response: Response object
         """
+        logger.info(f"Request: {request}")
+        
         try:
             if not request.prompt and not request.messages:
                 return create_error_response(HTTPStatus.BAD_REQUEST, "Missing parameter 'prompt' or 'messages'")
-
+            
             if request.prompt:
                  prompt = request.prompt
                  raise Exception("no prompt found in request")
 
-            logger.info(f"Request: {request}")
+            
 
             prompt_token_ids = self._check_length(prompt, request)
 
