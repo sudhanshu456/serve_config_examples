@@ -19,7 +19,7 @@ logger = logging.getLogger("ray.serve")
 fastapi_app = FastAPI()
 
 
-@serve.deployment(num_replicas=1, ray_actor_options={"num_cpus":2})
+@serve.deployment(num_replicas=1)
 @serve.ingress(fastapi_app)
 class FastAPIIngress:
     def __init__(self, model_handle) -> None:
@@ -42,7 +42,7 @@ def prepare_engine_args():
 
 
 @serve.deployment(
-    ray_actor_options={"num_gpus": 0},
+    ray_actor_options={"num_gpus": 1},
     autoscaling_config={"min_replicas": 1, "max_replicas": 1},
 )
 class VLLMDeployment:

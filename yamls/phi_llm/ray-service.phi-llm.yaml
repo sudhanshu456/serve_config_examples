@@ -6,9 +6,9 @@ spec:
   serveConfigV2: |
     applications:
       - name: phi_llm
-        import_path: phi_llm.phi_llm:app
+        import_path: phi_llm.main:app
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/b7f164081eb179e8aae0dfaad639a1ecf761f6a0.zip"
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/dc95edd49c942a90d13a2195a2200f4ad87828d6.zip"
           pip: ["requests","vllm"]
   rayClusterConfig:
     rayVersion: '2.9.0' # Should match the Ray version in the image of the containers
