@@ -9,12 +9,11 @@ spec:
         route_prefix: /
         import_path: ray-serve.main:deployment
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/86ab334f6e3dd1aee06b27399dbae1540866105f.zip"
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/69db30c779a6577c071dc85900db87f3fbc7fd12.zip"
           pip: [ "accelerate", "flash-attn" ,"git+https://github.com/huggingface/transformers", "pydantic", "vllm" ,"protobuf"]
         args:
           model: Sreenington/Phi-3-mini-4k-instruct-AWQ
           quantization: awq
-          max_tokens: 128
           trust_remote_code: true
           tensor_parallel_size: 1
           gpu_memory_utilization: 0.91

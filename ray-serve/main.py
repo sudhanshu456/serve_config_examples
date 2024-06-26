@@ -123,12 +123,6 @@ class VLLMGenerateDeployment:
         self.tokenizer = self.engine.engine.tokenizer
         self.max_model_len = kwargs.get('max_model_len', engine_model_config.max_model_len)
 
-        try:
-            self.model_config = load_model_config(args.model)
-        except FileNotFoundError:
-            logger.warn(f"No model config for: {args.model}")
-            self.model_config = None
-
     def _next_request_id(self):
         return str(uuid.uuid1().hex)
 
