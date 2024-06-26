@@ -1,0 +1,89 @@
+apiVersion: ray.io/v1
+kind: RayService
+metadata:
+  name: phi-llm
+spec:
+  serveConfigV2: |
+    applications:
+      - name: phi_llm
+        route_prefix: /
+        import_path: ray-serve.main:deployment
+        runtime_env:
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/86ab334f6e3dd1aee06b27399dbae1540866105f.zip"
+          pip: [ "accelerate", "flash-attn" ,"git+https://github.com/huggingface/transformers", "pydantic", "vllm" ,"protobuf"]
+        args:
+          model: Sreenington/Phi-3-mini-4k-instruct-AWQ
+          quantization: awq
+          max_tokens: 128
+          trust_remote_code: true
+          tensor_parallel_size: 1
+          gpu_memory_utilization: 0.91
+          dtype: auto
+          max_model_len: 2048
+
+  rayClusterConfig:
+    rayVersion: '2.30.0' # Should match the Ray version in the image of the containers
+    ######################headGroupSpecs#################################
+    # Ray head pod template.
+    headGroupSpec:
+      # The `rayStartParams` are used to configure the `ray start` command.
+      # See https://github.com/ray-project/kuberay/blob/master/docs/guidance/rayStartParams.md for the default settings of `rayStartParams` in KubeRay.
+      # See https://docs.ray.io/en/latest/cluster/cli.html#ray-start for all available options in `rayStartParams`.
+      rayStartParams:
+        dashboard-host: '0.0.0.0'
+      # Pod template
+      template:
+        spec:
+          containers:
+          - name: ray-head
+            image: rayproject/ray-ml:2.30.0
+            ports:
+            - containerPort: 6379
+              name: gcs
+            - containerPort: 8265
+              name: dashboard
+            - containerPort: 10001
+              name: client
+            - containerPort: 8000
+              name: serve
+            volumeMounts:
+              - mountPath: /tmp/ray
+                name: ray-logs
+            resources:
+              limits:
+                cpu: "2"
+                memory: "8G"
+              requests:
+                cpu: "2"
+                memory: "8G"
+          volumes:
+            - name: ray-logs
+              emptyDir: {}
+    workerGroupSpecs:
+    # The pod replicas in this group typed worker
+    - replicas: 1
+      minReplicas: 1
+      maxReplicas: 1
+      groupName: gpu-group
+      rayStartParams: {}
+      # Pod template
+      template:
+        spec:
+          containers:
+          - name: ray-worker
+            image: rayproject/ray-ml:2.30.0
+            resources:
+              limits:
+                cpu: 4
+                memory: "16G"
+                nvidia.com/gpu: 1
+              requests:
+                cpu: 3
+                memory: "12G"
+                nvidia.com/gpu: 1
+          # Please add the following taints to the GPU node.
+          tolerations:
+            - key: "nvidia.com/gpu"
+              operator: "Equal"
+              value: "present"
+              effect: "NoSchedule"
