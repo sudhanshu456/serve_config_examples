@@ -103,8 +103,7 @@ cli_args = {
     "model": "Qwen/Qwen1.5-0.5B",
     "tensor_parallel_size": 1,
     "response_role": "system",
-    "gpu_memory_utilization": 0.5,
-    "max_model_len": 1024,
+    "gpu_memory_utilization": 0.98,
     "enforce_eager": True
 }
 
