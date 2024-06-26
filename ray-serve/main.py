@@ -147,8 +147,6 @@ class VLLMGenerateDeployment:
             else:
                 raise Exception("no prompt found in request")
 
-            prompt_token_ids = self._check_length(prompt, request)
-
             request_dict = request.dict(exclude=set(['prompt', 'messages', 'stream']))
 
             sampling_params = SamplingParams(**request_dict)
