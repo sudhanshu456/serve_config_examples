@@ -42,7 +42,7 @@ def prepare_engine_args():
 
 
 @serve.deployment(
-    ray_actor_options={"num_gpus": 1},
+    # ray_actor_options={"num_gpus": 1},
     autoscaling_config={"min_replicas": 1, "max_replicas": 1},
 )
 class VLLMDeployment:
@@ -77,4 +77,4 @@ class VLLMDeployment:
             return JSONResponse(content=generator.model_dump())
 
 
-app = FastAPIIngress.bind(VLLMDeployment.bind(prepare_engine_args()))
+app = FastAPIIngress.bind(VLLMDeployment.options(placement_group_bundles=[{"CPU": 1, "GPU": 1}], placement_group_strategy="STRICT_PACK").bind(prepare_engine_args()))
