@@ -18,9 +18,11 @@ from pydantic import BaseModel, root_validator, validator
 import yaml
 import os
 
-"""
-ray_vllm_inference
-"""
+
+logger = logging.getLogger("ray.serve")
+
+app = FastAPI()
+
 
 class GenerateRequest(BaseModel):
     """Generate completion request.
@@ -56,12 +58,6 @@ class GenerateResponse(BaseModel):
     output_tokens: int
     finish_reason: Optional[str]
     
-"""
-"""
-
-logger = logging.getLogger("ray.serve")
-
-app = FastAPI()
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
@@ -173,7 +169,7 @@ class VLLMGenerateDeployment:
             Response: Response object
         """
         logger.info(f"Request: {request}")
-        
+
         try:
             if not request.prompt and not request.messages:
                 return create_error_response(HTTPStatus.BAD_REQUEST, "Missing parameter 'prompt' or 'messages'")
