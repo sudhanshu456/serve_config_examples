@@ -104,7 +104,8 @@ cli_args = {
     "tensor_parallel_size": 1,
     "response_role": "system",
     "gpu_memory_utilization": 0.98,
-    "enforce_eager": True
+    "enforce_eager": True,
+    
 }
 
 app = build_app(cli_args)
