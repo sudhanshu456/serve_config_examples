@@ -8,7 +8,7 @@ client = OpenAI(
     api_key="NOT A REAL KEY",
 )
 chat_completion = client.chat.completions.create(
-    model="microsoft/Phi-3-mini-128k-instruct",
+    model="microsoft/Phi-3-mini-4k-instruct",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {
