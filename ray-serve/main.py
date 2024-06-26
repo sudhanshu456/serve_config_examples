@@ -126,7 +126,7 @@ class VLLMGenerateDeployment:
         return Response(status_code=200)
 
     @app.post("/generate")
-    async def generate(self, request: GenerateRequest, raw_request: Request) -> Response:
+    async def generate(self, request: GenerateRequest, raw_request: Request) -> JSONResponse | Response | GenerateResponse:
         """Generate completion for the request.
 
         Args:
@@ -153,9 +153,9 @@ class VLLMGenerateDeployment:
             
             request_id = self._next_request_id()
 
-            output_generator = self.engine.generate(prompt=prompt,
-                                                    sampling_params=sampling_params,
-                                                    request_id=request_id)
+            output_generator = self.engine.generate(prompt,
+                                                    sampling_params,
+                                                    request_id)
             
             final_output = None
             async for request_output in output_generator:
@@ -167,6 +167,7 @@ class VLLMGenerateDeployment:
             text_outputs = final_output.outputs[0].text
             finish_reason = final_output.outputs[0].finish_reason
             return GenerateResponse(output=text_outputs, finish_reason=finish_reason)
+
         except ValueError as e:
             raise HTTPException(HTTPStatus.BAD_REQUEST, str(e))
         except Exception as e:
