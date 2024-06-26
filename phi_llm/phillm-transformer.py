@@ -26,7 +26,7 @@ class PhiLLM:
             "microsoft/Phi-3-mini-4k-instruct"
         )
 
-        self.pipe = pipeline("text-generation", model=model, tokenizer=tokenizer)
+        self.pipe = pipeline("text-generation", model=self.model, tokenizer=self.tokenizer)
 
     def generate(self, text):
         generation_args = {

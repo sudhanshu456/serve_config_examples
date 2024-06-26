@@ -6,12 +6,12 @@ spec:
   serveConfigV2: |
     applications:
       - name: phi_llm
-        import_path: phi_llm.phi_llm:app
+        import_path: phi_llm.phillm-transformer:app
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/c8b71bbed7e366cc731229923019a21e3646bac1.zip"
-          pip: ["requests","vllm"]
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/37810fa6cc579c0c490bf2cf967772b2c81571ff.zip"
+          pip: ["requests", "accelerate", "flash-attn" ,"git+https://github.com/huggingface/transformers"]
   rayClusterConfig:
-    rayVersion: '2.9.0' # Should match the Ray version in the image of the containers
+    rayVersion: '2.30.0' # Should match the Ray version in the image of the containers
     ######################headGroupSpecs#################################
     # Ray head pod template.
     headGroupSpec:
@@ -25,7 +25,7 @@ spec:
         spec:
           containers:
           - name: ray-head
-            image: rayproject/ray-ml:2.9.0
+            image: rayproject/ray-ml:2.30.0
             ports:
             - containerPort: 6379
               name: gcs
@@ -60,7 +60,7 @@ spec:
         spec:
           containers:
           - name: ray-worker
-            image: rayproject/ray-ml:2.9.0
+            image: rayproject/ray-ml:2.30.0
             resources:
               limits:
                 cpu: 4
