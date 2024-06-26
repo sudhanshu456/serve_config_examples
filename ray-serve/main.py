@@ -126,7 +126,7 @@ class VLLMGenerateDeployment:
         return Response(status_code=200)
 
     @app.post("/generate")
-    async def generate(self, request: GenerateRequest, raw_request: Request) -> JSONResponse | Response | GenerateResponse:
+    async def generate(self, request: GenerateRequest, raw_request: Request) -> Union[Response, GenerateResponse]:
         """Generate completion for the request.
 
         Args:
