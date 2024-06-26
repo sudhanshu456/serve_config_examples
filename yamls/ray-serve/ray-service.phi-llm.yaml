@@ -10,7 +10,7 @@ spec:
         import_path: ray-serve.main:deployment
         runtime_env:
           working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/054238af2482b169483bf136c0aaeb0781c0d26a.zip"
-          pip: [ "accelerate", "flash-attn" ,"git+https://github.com/huggingface/transformers", "pydantic", "vllm" ,"protobuf","fastapi"]
+          pip: [ "accelerate", "flash-attn" ,"git+https://github.com/huggingface/transformers", "pydantic", "vllm" ,"protobuf"]
         args:
           model: Sreenington/Phi-3-mini-4k-instruct-AWQ
           quantization: awq

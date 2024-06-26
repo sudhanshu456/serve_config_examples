@@ -176,9 +176,8 @@ class VLLMGenerateDeployment:
             
             if request.prompt:
                  prompt = request.prompt
-                 raise Exception("no prompt found in request")
-
-            
+            else:
+                raise Exception("no prompt found in request")
 
             prompt_token_ids = self._check_length(prompt, request)
 
