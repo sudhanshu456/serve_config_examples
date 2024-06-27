@@ -5,7 +5,10 @@ from typing import Dict
 from ray import serve
 
 
-@serve.deployment(ray_actor_options={"num_gpus": 1})
+@serve.deployment(
+    ray_actor_options={"num_gpus": 1},
+    max_concurrent_queries=10
+    )
 class PhiLLM:
     def __init__(
         self,
