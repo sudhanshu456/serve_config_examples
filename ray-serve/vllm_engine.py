@@ -11,7 +11,7 @@ import uuid
 
 import nest_asyncio
 from ray import serve
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 from pydantic import BaseModel
 
 
