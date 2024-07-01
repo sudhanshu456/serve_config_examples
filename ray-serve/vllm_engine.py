@@ -19,6 +19,12 @@ logger = logging.getLogger("ray.serve")
 
 app = FastAPI()
 
+class Message(BaseModel):
+    role: Literal["system", "assistant", "user"]
+    content: str
+
+    def __str__(self):
+        return self.content
 
 class GenerateRequest(BaseModel):
     """Generate completion request.
@@ -29,9 +35,10 @@ class GenerateRequest(BaseModel):
             values make the model more deterministic, while higher values make
             the model more random. Zero means greedy sampling.
         """
-    prompt: Optional[str]
     max_tokens: Optional[int] = 128
     temperature: Optional[float] = 0.7
+    prompt: Optional[str]
+    messages: Optional[List[Message]]
 
 
 class GenerateResponse(BaseModel):
@@ -87,21 +94,8 @@ class VLLMInference:
                     "max_tokens": 500,
                     "temperature": 0.1,
                 }
-            if request.prompt is None:
-                raise ValueError("Prompt is required")
-            request_prompt = request.prompt
-
-            sampling_params = SamplingParams(**generation_args)
-            request_id = self._next_request_id()
-
-            # Assuming the prompt is a chat template
-            # prompt = self.tokenizer.apply_chat_template(
-            #     request_prompt,
-            #     tokenize=False,
-            #     add_generation_prompt=True
-            # )
-
-            """Example of Prompt
+            
+            """Example of Messages
             messages = [
                 {"role": "user", "content": "Can you provide ways to eat combinations of bananas and dragonfruits?"},
                 {"role": "assistant",
@@ -110,7 +104,23 @@ class VLLMInference:
             ]
             """
 
-            results_generator = self.engine.generate(request_prompt, sampling_params, request_id)
+            if request.prompt:
+                prompt = request.prompt
+            elif request.messages:
+
+                prompt = self.tokenizer.apply_chat_template(
+                    request.messages,
+                    tokenize=False,
+                    add_generation_prompt=True
+                )
+            else:
+                raise ValueError("Prompt or Messages is required")
+
+            sampling_params = SamplingParams(**generation_args)
+
+            request_id = self._next_request_id()
+            
+            results_generator = self.engine.generate(prompt, sampling_params, request_id)
 
             final_result = None
             async for result in results_generator:
@@ -122,12 +132,6 @@ class VLLMInference:
                 return GenerateResponse(output=final_result.outputs[0].text,
                                         finish_reason=final_result.outputs[0].finish_reason,
                                         prompt=final_result.prompt)
-                # print(json.dumps({"text": [final_result.prompt + output.text for output in final_result.outputs]}))
-                # print(json.dumps(
-                #     {"prompt": final_result.prompt,
-                #      "text": [output.text for output in final_result.outputs],
-                #      "finish_reason": final_result.outputs[0].finish_reason, },
-                #     indent=4))
             else:
                 raise ValueError("No results found")
         except ValueError as e:
