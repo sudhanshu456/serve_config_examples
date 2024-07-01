@@ -78,7 +78,7 @@ def _prepare_engine_args():
 
 @serve.deployment(name='VLLMInference',
                   num_replicas=1,
-                  max_concurrent_queries=1000,
+                  max_concurrent_queries=256,
                   ray_actor_options={"num_gpus": 1.0}
                   )
 @serve.ingress(app)

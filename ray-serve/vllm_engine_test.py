@@ -20,7 +20,7 @@ def make_request():
     return response.text
 
 
-max_workers = 500
+max_workers = 256
 # Run 10 requests concurrently
 with ThreadPoolExecutor(max_workers=max_workers) as executor:
     # Start the load test
