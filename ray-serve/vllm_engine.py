@@ -81,7 +81,6 @@ class VLLMInference:
     def _prepare_tokenizer():
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(_prepare_engine_args().model)
-        tokenizer.chat_template = "{{ bos_token }}{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] + '<|end|>' }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] + '<|end|>' }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n'  + message['content'] + '<|end|>' }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}"
         return tokenizer
 
     @app.post("/generate", response_model=GenerateResponse)
@@ -95,15 +94,6 @@ class VLLMInference:
                     "temperature": 0.1,
                 }
             
-            """Example of Messages
-            messages = [
-                {"role": "user", "content": "Can you provide ways to eat combinations of bananas and dragonfruits?"},
-                {"role": "assistant",
-                 "content": "Sure! Here are some ways to eat bananas and dragonfruits together: 1. Banana and dragonfruit smoothie: Blend bananas and dragonfruits together with some milk and honey. 2. Banana and dragonfruit salad: Mix sliced bananas and dragonfruits together with some lemon juice and honey."},
-                {"role": "user", "content": "What about solving an 2x + 3 = 7 equation?"},
-            ]
-            """
-
             if request.prompt:
                 prompt = request.prompt
             elif request.messages:
