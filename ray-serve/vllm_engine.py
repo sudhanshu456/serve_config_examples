@@ -89,7 +89,6 @@ class VLLMInference:
         self.engine = AsyncLLMEngine.from_engine_args(self.args)
         self.tokenizer = self._prepare_tokenizer()
 
-    @staticmethod
     def _prepare_tokenizer():
         from transformers import AutoTokenizer
         if self.args.trust_remote_code:
