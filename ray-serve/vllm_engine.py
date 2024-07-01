@@ -95,11 +95,11 @@ class VLLMInference:
             request_id = self._next_request_id()
 
             # Assuming the prompt is a chat template
-            prompt = self.tokenizer.apply_chat_template(
-                request_prompt,
-                tokenize=False,
-                add_generation_prompt=True
-            )
+            # prompt = self.tokenizer.apply_chat_template(
+            #     request_prompt,
+            #     tokenize=False,
+            #     add_generation_prompt=True
+            # )
 
             """Example of Prompt
             messages = [
@@ -110,7 +110,7 @@ class VLLMInference:
             ]
             """
 
-            results_generator = self.engine.generate(prompt, sampling_params, request_id)
+            results_generator = self.engine.generate(request_prompt, sampling_params, request_id)
 
             final_result = None
             async for result in results_generator:
