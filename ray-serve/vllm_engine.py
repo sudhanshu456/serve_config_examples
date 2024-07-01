@@ -11,7 +11,8 @@ import uuid
 
 import nest_asyncio
 from ray import serve
-from typing import Optional, Literal, List
+from ray.serve import Application
+from typing import Optional, Literal, List, Dict
 from pydantic import BaseModel
 
 
@@ -53,12 +54,18 @@ class GenerateResponse(BaseModel):
 
 
 def _prepare_engine_args():
+    
     engine_args = AsyncEngineArgs(
-        model="microsoft/Phi-3-small-8k-instruct",
+        model="microsoft/Phi-3-mini-4k-instruct",
         trust_remote_code=True,
         dtype="float16",
     )
 
+    # engine_args = AsyncEngineArgs(
+    #     model="microsoft/Phi-3-small-8k-instruct",
+    #     trust_remote_code=True,
+    #     dtype="float16",
+    # )
 
     # engine_args = AsyncEngineArgs(
     #     model="Sreenington/Phi-3-mini-4k-instruct-AWQ",
@@ -76,18 +83,19 @@ def _prepare_engine_args():
                   )
 @serve.ingress(app)
 class VLLMInference:
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(app)
-        self.engine = AsyncLLMEngine.from_engine_args(_prepare_engine_args())
+        self.args = AsyncEngineArgs(**kwargs)
+        self.engine = AsyncLLMEngine.from_engine_args(args)
         self.tokenizer = self._prepare_tokenizer()
 
     @staticmethod
     def _prepare_tokenizer():
         from transformers import AutoTokenizer
-        if _prepare_engine_args().trust_remote_code:
-            tokenizer = AutoTokenizer.from_pretrained(_prepare_engine_args().model, trust_remote_code=True)
+        if self.args.trust_remote_code:
+            tokenizer = AutoTokenizer.from_pretrained(self.args.model, trust_remote_code=True)
         else:
-            tokenizer = AutoTokenizer.from_pretrained(_prepare_engine_args().model)
+            tokenizer = AutoTokenizer.from_pretrained(self.args.model)
         return tokenizer
 
     @app.post("/generate", response_model=GenerateResponse)
@@ -151,4 +159,5 @@ class VLLMInference:
         return Response(status_code=200)
 
 
-deployment_llm = VLLMInference.bind()
+def deployment_llm(args: Dict[str, str]) -> Application:
+    return VLLMInference.bind(**args)

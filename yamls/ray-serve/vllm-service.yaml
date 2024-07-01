@@ -11,6 +11,10 @@ spec:
         runtime_env:
           working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/d92d58369c344def55fcf3e5019f45e68f5540d4.zip"
           pip: [ "git+https://github.com/huggingface/transformers", "pydantic", "vllm", "fastapi", "requests"]
+        args:
+          model: microsoft/Phi-3-mini-4k-instruct
+          trust_remote_code: true
+          dtype: float16
   rayClusterConfig:
     rayVersion: '2.30.0' # Should match the Ray version in the image of the containers
     ######################headGroupSpecs#################################
