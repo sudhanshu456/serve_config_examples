@@ -9,7 +9,7 @@ spec:
         route_prefix: /
         import_path: ray-serve.vllm_engine:deployment_llm
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/0395cfc44e26a5677ee102f1ae6df15c2a219738.zip"
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/d92d58369c344def55fcf3e5019f45e68f5540d4.zip"
           pip: [ "git+https://github.com/huggingface/transformers", "pydantic", "vllm", "fastapi", "requests"]
   rayClusterConfig:
     rayVersion: '2.30.0' # Should match the Ray version in the image of the containers
