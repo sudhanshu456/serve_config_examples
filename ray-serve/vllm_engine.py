@@ -55,11 +55,12 @@ class GenerateResponse(BaseModel):
 def _prepare_engine_args():
     engine_args = AsyncEngineArgs(
         # gpu_memory_utilization=0.98,
-        model="Sreenington/Phi-3-mini-4k-instruct-AWQ",
-        quantization="AWQ",
+        model="microsoft/Phi-3-small-8k-instruct",
+        # quantization="AWQ",
         # tensor_parallel_size=1,
         trust_remote_code=True,
-        max_model_len=4096,
+        # max_model_len=4096,
+        dtype="float16",
         # enforce_eager=True
     )
     return engine_args
@@ -89,6 +90,7 @@ class VLLMInference:
         try:
             generation_args = request.dict(exclude={'prompt', 'messages'})
             if generation_args is None:
+                # Default value
                 generation_args = {
                     "max_tokens": 500,
                     "temperature": 0.1,
