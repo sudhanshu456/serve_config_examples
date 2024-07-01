@@ -9,7 +9,7 @@ spec:
         route_prefix: /
         import_path: ray-serve.vllm_engine:deployment_llm
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/d92d58369c344def55fcf3e5019f45e68f5540d4.zip"
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/4a3c72d517b7a14175de872ab5e25501ff1f7cc3.zip"
           pip: [ "git+https://github.com/huggingface/transformers", "pydantic", "vllm", "fastapi", "requests"]
         args:
           model: microsoft/Phi-3-mini-4k-instruct

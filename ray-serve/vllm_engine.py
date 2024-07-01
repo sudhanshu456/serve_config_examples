@@ -86,7 +86,7 @@ class VLLMInference:
     def __init__(self, **kwargs):
         super().__init__(app)
         self.args = AsyncEngineArgs(**kwargs)
-        self.engine = AsyncLLMEngine.from_engine_args(args)
+        self.engine = AsyncLLMEngine.from_engine_args(self.args)
         self.tokenizer = self._prepare_tokenizer()
 
     @staticmethod
