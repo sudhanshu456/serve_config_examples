@@ -54,15 +54,18 @@ class GenerateResponse(BaseModel):
 
 def _prepare_engine_args():
     engine_args = AsyncEngineArgs(
-        # gpu_memory_utilization=0.98,
         model="microsoft/Phi-3-small-8k-instruct",
-        # quantization="AWQ",
-        # tensor_parallel_size=1,
         trust_remote_code=True,
-        # max_model_len=4096,
         dtype="float16",
-        # enforce_eager=True
     )
+
+
+    # engine_args = AsyncEngineArgs(
+    #     model="Sreenington/Phi-3-mini-4k-instruct-AWQ",
+    #     quantization="AWQ",
+    #     trust_remote_code=True,
+    #     max_model_len=4096,
+    # )
     return engine_args
 
 
@@ -81,7 +84,10 @@ class VLLMInference:
     @staticmethod
     def _prepare_tokenizer():
         from transformers import AutoTokenizer
-        tokenizer = AutoTokenizer.from_pretrained(_prepare_engine_args().model)
+        if _prepare_engine_args().trust_remote_code:
+            tokenizer = AutoTokenizer.from_pretrained(_prepare_engine_args().model, trust_remote_code=True)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(_prepare_engine_args().model)
         return tokenizer
 
     @app.post("/generate", response_model=GenerateResponse)
