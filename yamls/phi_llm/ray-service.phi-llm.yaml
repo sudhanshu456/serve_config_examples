@@ -8,7 +8,7 @@ spec:
       - name: phi_llm
         import_path: phi_llm.phillm-transformer:app
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/86ab334f6e3dd1aee06b27399dbae1540866105f.zip"
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/b0aa21a58f41887670c6135476c8f7377e430adb.zip"
           pip: ["requests", "accelerate", "flash-attn" ,"git+https://github.com/huggingface/transformers"]
   rayClusterConfig:
     rayVersion: '2.30.0' # Should match the Ray version in the image of the containers
