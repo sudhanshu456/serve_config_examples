@@ -9,7 +9,7 @@ spec:
         route_prefix: /
         import_path: ray-serve.vllm_engine:deployment_llm
         runtime_env:
-          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/7e05a1603184367af88b58a58a408144d57868d3.zip"
+          working_dir: "https://github.com/sudhanshu456/serve_config_examples/archive/598b264da12fd243bed3889180e5270ae9c310d0.zip"
           pip: [ "git+https://github.com/huggingface/transformers", "pydantic", "vllm", "fastapi", "requests"]
         args:
           model: microsoft/Phi-3-small-8k-instruct
@@ -51,6 +51,7 @@ spec:
               requests:
                 cpu: "2"
                 memory: "8G"
+            # run without monitoring stack enabled
             # env:
             # - name: RAY_GRAFANA_IFRAME_HOST
             #   value: http://127.0.0.1:3000
