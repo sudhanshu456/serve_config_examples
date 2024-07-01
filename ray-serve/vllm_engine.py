@@ -11,7 +11,7 @@ import uuid
 
 import nest_asyncio
 from ray import serve
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel
 
 
@@ -34,12 +34,12 @@ class GenerateRequest(BaseModel):
         temperature: Float that controls the randomness of the sampling. Lower
             values make the model more deterministic, while higher values make
             the model more random. Zero means greedy sampling.
+        messages: List of messages to use for the generation
         """
     max_tokens: Optional[int] = 128
     temperature: Optional[float] = 0.7
     prompt: Optional[str]
     messages: Optional[List[Message]]
-
 
 class GenerateResponse(BaseModel):
     """Generate completion response.
